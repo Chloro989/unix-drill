@@ -1,0 +1,180 @@
+chapter: 4
+title: パイプでつなぐ
+problems:
+  - id: 4-01
+    title: 管でつなぐ
+    scenario: |
+      前の章では、コマンドの出口をファイルへ向けた。
+      今度は、出口を「次のコマンドの入口」へ向ける。
+    prompt: パイプを使って、{list} の行数を表示せよ。（cat と wc を組み合わせること）
+    solution: cat {list} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [cat]
+    hints:
+      - 2 つのコマンドを縦棒でつなぎます。
+      - "cat でファイルを流し、| のうしろで wc -l が受け取ります。"
+      - cat {list} | wc -l
+    explain: |
+      cat の出口から流れ出たものが、そのまま wc の入口へ入ります。
+      途中にファイルは作られません。管を直結しただけです。
+
+  - id: 4-02
+    title: 途中を切り出す
+    scenario: |
+      {bigtext} の 18 行目あたりを見たい。
+      でも head は先頭からしか取れないし、tail は末尾からしか取れない。
+    prompt: "{bigtext} の 18 行目から 20 行目までの 3 行を表示せよ。"
+    solution: head -n 20 {bigtext} | tail -n 3
+    judge:
+      mode: stdout
+    require_any: [head]
+    hints:
+      - 先に大きく切ってから、そのうしろだけを取ります。
+      - head で 20 行取り、その末尾 3 行を tail で取ります。
+      - head -n 20 {bigtext} | tail -n 3
+    explain: |
+      head と tail を組み合わせると、任意の範囲を切り出せます。
+      「粗く削ってから細かく削る」は、パイプの基本的な考え方です。
+
+  - id: 4-03
+    title: ものを数える
+    prompt: パイプを使って、カレントディレクトリにあるファイル・ディレクトリの数を表示せよ。
+    solution: ls | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [ls]
+    hints:
+      - 一覧を出すコマンドと、行を数えるコマンドをつなぎます。
+      - ls の出力は 1 行 1 件なので、行数を数えれば件数になります。
+      - ls | wc -l
+    explain: |
+      ls は画面に出すときだけ横に並べて表示しますが、
+      パイプに流すときは 1 行 1 件になります。
+      「行が並んだテキスト」という共通の約束が、ここでも効いています。
+
+  - id: 4-04
+    title: 連結して数える
+    prompt: "{fileA} と {fileB} を連結した結果が何行になるかを、パイプを使って表示せよ。"
+    solution: cat {fileA} {fileB} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [cat]
+    hints:
+      - 連結するコマンドの出力を、数えるコマンドへ流します。
+      - "cat で 2 つ並べ、| wc -l を足します。"
+      - cat {fileA} {fileB} | wc -l
+    explain: |
+      3 章の cat A B > C と見比べてください。
+      > はファイルへ、| は次のコマンドへ。cat の役割は同じです。
+
+  - id: 4-05
+    title: ちょうど 100 行目
+    prompt: "{log} の 100 行目だけを表示せよ。"
+    solution: head -n 100 {log} | tail -n 1
+    judge:
+      mode: stdout
+    require_any: [head]
+    hints:
+      - 先頭から 100 行取り、その最後の 1 行を取ります。
+      - head -n 100 と tail -n 1 をつなぎます。
+      - head -n 100 {log} | tail -n 1
+    explain: |
+      この形はよく使います。9 章で習う sed -n '100p' でも同じことができます。
+      同じ結果に至る道が複数ある、というのが UNIX の面白いところです。
+
+  - id: 4-06
+    title: 記号の使い分け
+    prompt: 「コマンド A の出力を、ファイルに保存せず、そのままコマンド B に渡す」書き方はどれか。番号で答えよ。
+    choices:
+      - A > B
+      - A >> B
+      - "A | B"
+      - A < B
+    judge:
+      mode: text
+    accept:
+      - "3"
+    solution: "3"
+    hints:
+      - 右側にあるのはファイル名ではなくコマンド名です。
+      - 縦棒です。
+      - "3"
+    explain: |
+      A > B と書くと、B という名前の「ファイル」が作られてしまいます。
+      コマンドをつなぎたいときは必ず | です。
+      この取り違えは、試験でも実務でもよくある間違いです。
+
+  - id: 4-07
+    title: 末尾のさらに先頭
+    prompt: "{log} の末尾 20 行のうち、先頭 5 行を表示せよ。"
+    solution: tail -n 20 {log} | head -n 5
+    judge:
+      mode: stdout
+    require_any: [tail]
+    hints:
+      - まず末尾を大きく取り、そのうえで先頭を取ります。
+      - tail -n 20 と head -n 5 をつなぎます。
+      - tail -n 20 {log} | head -n 5
+    explain: |
+      4-02 とちょうど逆の組み合わせです。
+      どちらを先に置くかで結果が変わることを確かめておいてください。
+
+  - id: 4-08
+    title: 三段つなぐ
+    prompt: "{bigtext} の 9 行目から 12 行目までを、cat・head・tail の 3 つをパイプでつないで表示せよ。"
+    solution: cat {bigtext} | head -n 12 | tail -n 4
+    judge:
+      mode: stdout
+    require_any: [cat]
+    hints:
+      - パイプは何段でもつなげます。
+      - cat で流し、head -n 12 で切り、tail -n 4 で取ります。
+      - cat {bigtext} | head -n 12 | tail -n 4
+    explain: |
+      左から右へ、水が流れるように処理が進みます。
+      長いパイプラインも、この「一段ずつ」の積み重ねでしかありません。
+      作るときは 1 段目だけ実行して確かめ、少しずつ足していくのが安全です。
+
+  - id: 4-09
+    title: 一覧の先頭だけ
+    prompt: カレントディレクトリの一覧のうち、先頭 3 件だけを表示せよ。
+    solution: ls | head -n 3
+    judge:
+      mode: stdout
+    require_any: [ls]
+    hints:
+      - 一覧を出してから、先頭を切り取ります。
+      - ls と head -n 3 をつなぎます。
+      - ls | head -n 3
+    explain: |
+      ファイルが何千個もあるディレクトリで ls を打つと画面が埋まります。
+      | head を付ける癖をつけておくと安全です。
+
+  - id: 4-10
+    title: 無駄な cat
+    prompt: |
+      cat {list} | wc -l と wc -l {list} は同じ結果になる。
+      後者のほうが望ましいとされる理由として、最も適切なものはどれか。番号で答えよ。
+    choices:
+      - 前者は結果が間違っているから
+      - 前者はコマンドを 1 つ余計に動かしており、cat を挟む必要がないから
+      - 前者は大きなファイルでは動かないから
+      - 前者は macOS では使えないから
+    judge:
+      mode: text
+    accept:
+      - "2"
+    solution: "2"
+    hints:
+      - 結果はどちらも正しく、どちらの環境でも動きます。
+      - 違うのは「手数」です。
+      - "2"
+    explain: |
+      ほとんどのコマンドはファイル名を直接受け取れるので、cat を挟む必要がありません。
+      これは useless use of cat と呼ばれ、よくからかわれる書き方です。
+      ただし練習では、パイプの流れが目で見えるので分かりやすいという利点があります。
+      試験では、どちらで書いても正解になるはずです。

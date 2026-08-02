@@ -1,0 +1,183 @@
+chapter: 10
+title: 総合と応用
+problems:
+  - id: 10-01
+    title: 記録の内訳を出す
+    scenario: |
+      {dataset}の処理記録が届いた。まず全体像をつかみたい。
+      INFO / WARNING / ERROR がそれぞれ何件あるのか。
+    prompt: "{log} の 3 列目（記録の種別）ごとの件数を数え、多い順に表示せよ。"
+    solution: awk '{print $3}' {log} | sort | uniq -c | sort -rn
+    alt_solutions:
+      - cut -d " " -f 3 {log} | sort | uniq -c | sort -rn
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    hints:
+      - 列を取り出して、7 章の集計の型に流し込みます。
+      - "列を取り出し、sort | uniq -c | sort -rn につなぎます。"
+      - awk '{print $3}' {log} | sort | uniq -c | sort -rn
+    explain: |
+      7 章で覚えた sort | uniq -c | sort -rn が、そのまま使えます。
+      前段を差し替えるだけで、いろいろな集計になる。これが型を覚える利点です。
+
+  - id: 10-02
+    title: 失敗が多かった日
+    prompt: "{log} のうち ERROR を含む行について、1 列目（日付）ごとの件数を数え、多い順に 3 件表示せよ。"
+    solution: grep ERROR {log} | awk '{print $1}' | sort | uniq -c | sort -rn | head -n 3
+    alt_solutions:
+      - grep ERROR {log} | cut -d " " -f 1 | sort | uniq -c | sort -rn | head -n 3
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    hints:
+      - まず絞り込み、次に列を取り出し、最後に集計します。
+      - "grep で絞ってから、awk '{print $1}' | sort | uniq -c | sort -rn | head -n 3。"
+      - grep ERROR {log} | awk '{print $1}' | sort | uniq -c | sort -rn | head -n 3
+    explain: |
+      絞る → 取り出す → 数える → 並べる → 切る。
+      5 段のパイプですが、一段ずつ足していけば必ず組み立てられます。
+      作るときは grep だけ実行して確かめ、少しずつ伸ばすこと。
+
+  - id: 10-03
+    title: 分類ごとの件数
+    prompt: "{table} の {catcol} 列目（{catlabel}）ごとの件数を数え、多い順に 3 件表示せよ。見出し行は除くこと。"
+    solution: cut -f {catcol} {table} | tail -n +2 | sort | uniq -c | sort -rn | head -n 3
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    hints:
+      - 列を取り出し、見出しを外してから集計します。
+      - "cut -f で列を取り、tail -n +2 で見出しを外し、集計の型に流します。"
+      - cut -f {catcol} {table} | tail -n +2 | sort | uniq -c | sort -rn | head -n 3
+    explain: |
+      タブ区切りなので cut -f がそのまま使えます。
+      awk -F"\t" '{print $列}' と書いても同じ結果になります。
+
+  - id: 10-04
+    title: 平均を求める
+    prompt: "{records} の {agecol} 列目の平均を表示せよ。見出し行は数えないこと。"
+    solution: awk -F, 'NR>1 {s+=${agecol}; n++} END{print s/n}' {records}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    hints:
+      - 計算が要るので awk を使います。カンマ区切りです。
+      - "-F, を付け、NR>1 で見出しを外し、END で s/n を出します。"
+      - awk -F, 'NR>1 {s+=${agecol}; n++} END{print s/n}' {records}
+    explain: |
+      平均は grep や sort では出せません。計算が要るところが awk の担当です。
+
+  - id: 10-05
+    title: 抽出して保存する
+    prompt: "{log} から ERROR または WARNING を含む行を抜き出し、problems.txt に書き込め。"
+    solution: grep -E "ERROR|WARNING" {log} > problems.txt
+    alt_solutions:
+      - grep "ERROR\|WARNING" {log} > problems.txt
+    judge:
+      mode: files
+    hints:
+      - 「または」で探し、その結果をファイルへ流します。
+      - "grep -E \"ERROR|WARNING\" のうしろに > problems.txt を足します。"
+      - grep -E "ERROR|WARNING" {log} > problems.txt
+    explain: |
+      5 章の grep -E と 3 章の > を組み合わせただけです。
+      試験で問われるのは、たいていこの程度の組み合わせです。
+
+  - id: 10-06
+    title: 最も長い行
+    prompt: "{log} の中で最も長い行の文字数を表示せよ。"
+    solution: awk '{print length}' {log} | sort -n | tail -n 1
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    hints:
+      - awk には行の長さを返す書き方があります。
+      - "'{print length}' で長さを出し、数値順に並べて最後を取ります。"
+      - awk '{print length}' {log} | sort -n | tail -n 1
+    explain: |
+      length は awk の組み込み関数で、$0 の文字数を返します。
+      sort -n を忘れると、文字として比較されて 9 が 100 より大きくなります。
+
+  - id: 10-07
+    title: 一覧を表示する（記述式）
+    scenario: |
+      ここから 4 問は、紙に書く形式。実行はしない。
+    prompt: 今いるディレクトリの中にある、ファイルとディレクトリの一覧を画面に出す UNIX コマンドを 1 つ書け。
+    judge:
+      mode: text
+    accept:
+      - ls
+    solution: ls
+    hints:
+      - 2 文字です。
+      - list の略です。
+      - ls
+    explain: |
+      大学院入試では、この程度の短さで 1 コマンドを書かせる形式が出ています。
+      オプションは不要。反射で書けるようにしておくこと。
+
+  - id: 10-08
+    title: 連結して保存する（記述式）
+    prompt: |
+      2 つのファイル A と B の中身をこの順につなぎ、その結果を
+      ファイル C に保存する UNIX コマンドラインを書け。（A・B・C はそのまま書いてよい）
+    judge:
+      mode: text
+    accept:
+      - cat a b ?> ?c
+      - cat a b ?> ?c
+    solution: cat A B > C
+    hints:
+      - 連結するコマンドと、書き込みの記号を組み合わせます。
+      - cat と > を使います。
+      - cat A B > C
+    explain: |
+      「連結して保存」は入試で問われやすい典型です。
+      >> にすると追記になってしまうので、ここは > が正解。
+
+  - id: 10-09
+    title: 行を数えるコマンドライン
+    prompt: |
+      ファイル seq.txt のうち、> で始まる行の数を表示する
+      UNIX コマンドラインを 1 つ答えよ。
+    judge:
+      mode: text
+    accept:
+      - grep -c ["']?\^>["']? seq\.txt
+      - grep -c ["']?\^>["']? seq\.txt
+      - grep ["']?\^>["']? seq\.txt \| wc -l
+      - grep -c ["']?\^\\>["']? seq\.txt
+    solution: grep -c "^>" seq.txt
+    hints:
+      - 行頭を表す記号と、件数を出すオプションを使います。
+      - "grep -c \"^>\" ファイル名、または grep \"^>\" ファイル名 | wc -l。"
+      - grep -c "^>" seq.txt
+    explain: |
+      FASTA 形式の配列本数を数える、生命科学では最頻出の一行です。
+      ^ を付けないと、行の途中の > も拾ってしまいます。
+      引用符で囲まないと、> がリダイレクトと解釈されてファイルが作られます。
+      これは実害のある間違いなので、必ず囲むこと。
+
+  - id: 10-10
+    title: 一致しないものを選ぶ
+    prompt: |
+      正規表現 ^[0-9]{2,4}$ に、文字列全体が一致しないものはどれか。番号で答えよ。
+    choices:
+      - "12"
+      - "1234"
+      - "1"
+      - "999"
+    judge:
+      mode: text
+    accept:
+      - "3"
+    solution: "3"
+    hints:
+      - "{2,4} は「2 回以上 4 回以下」を表します。"
+      - 桁数を数えてみてください。
+      - "3"
+    explain: |
+      {n,m} は n 回以上 m 回以下。したがって 2 桁から 4 桁までが一致します。
+      1 桁の「1」は下限に足りません。
+      {2,} なら 2 回以上（上限なし）、{2} ならちょうど 2 回。

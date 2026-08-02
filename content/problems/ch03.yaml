@@ -1,0 +1,186 @@
+chapter: 3
+title: 三本の管（リダイレクト）
+problems:
+  - id: 3-01
+    title: 連結して保存する
+    scenario: |
+      別々に届いた {fileA} と {fileB} を、1 つのファイルにまとめたい。
+    prompt: "{fileA} と {fileB} の内容を連結し、結果を merged.txt に書き込め。"
+    solution: cat {fileA} {fileB} > merged.txt
+    judge:
+      mode: files
+    require_any: [cat]
+    hints:
+      - 連結するコマンドと、出力先を変える記号を組み合わせます。
+      - "cat で 2 つ並べ、> で書き込み先を指定します。"
+      - cat {fileA} {fileB} > merged.txt
+    explain: |
+      入試で問われやすい典型的な形です。
+      cat が「連結」、> が「画面ではなくファイルへ流す」を担当しています。
+      2 つの役割が別のものだと分けて理解しておくと応用が利きます。
+
+  - id: 3-02
+    title: 上書きで保存
+    prompt: "{table} の先頭 5 行を top5.tsv に書き込め。"
+    solution: head -n 5 {table} > top5.tsv
+    judge:
+      mode: files
+    require_any: [head]
+    hints:
+      - 先頭を取り出すコマンドと、書き込みの記号を組み合わせます。
+      - "head -n 5 のうしろに > とファイル名を書きます。"
+      - head -n 5 {table} > top5.tsv
+    explain: |
+      > は書き込み先のファイルを毎回まっさらにしてから書きます。
+      大事なファイルを > の右に書くと、中身が一瞬で消えます。
+
+  - id: 3-03
+    title: 追記する
+    scenario: |
+      先頭と末尾を 1 つのファイルに集めて、形式の確認に使いたい。
+    prompt: |
+      {bigtext} の先頭 3 行を sample.txt に書き込み、
+      続けて末尾 3 行を同じ sample.txt に追記せよ。（2 つのコマンドを使ってよい）
+    solution: "head -n 3 {bigtext} > sample.txt; tail -n 3 {bigtext} >> sample.txt"
+    alt_solutions:
+      - "head -n 3 {bigtext} > sample.txt && tail -n 3 {bigtext} >> sample.txt"
+    judge:
+      mode: files
+    hints:
+      - 1 つ目は上書き、2 つ目は追記の記号を使います。
+      - "追記は > を 2 つ重ねます。2 つのコマンドは ; でつなげます。"
+      - "head -n 3 {bigtext} > sample.txt; tail -n 3 {bigtext} >> sample.txt"
+    explain: |
+      >  … 既存の内容を消してから書く
+      >> … 末尾に足す
+      ; は「前が終わったら次」、&& は「前が成功したら次」。
+
+  - id: 3-04
+    title: 記号の違いを言葉で
+    prompt: "> と >> の違いとして正しいものを、番号で答えよ。"
+    choices:
+      - "> は追記、>> は上書き"
+      - "> は上書き、>> は追記"
+      - どちらも同じ意味で、書き方の好みの違い
+      - "> はファイルへ、>> は画面へ出力する"
+    judge:
+      mode: text
+    accept:
+      - "2"
+    solution: "2"
+    hints:
+      - 片方はファイルを空にしてから書きます。
+      - 記号が長いほうが「足す」側です。
+      - "2"
+    explain: |
+      > は上書き、>> は追記。
+      間違えて > を使うと元の内容は復元できません。
+      迷ったら、まず >> で試して、あとから作り直すのが安全です。
+
+  - id: 3-05
+    title: 入力の向きを変える
+    prompt: "< を使って、{list} の行数を表示せよ。"
+    solution: wc -l < {list}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - ファイル名を引数で渡すのではなく、中身を流し込みます。
+      - "wc -l のうしろに < とファイル名を書きます。"
+      - wc -l < {list}
+    explain: |
+      wc -l {list} と wc -l < {list} は、出力が微妙に違います。
+      前者はファイル名も一緒に表示し、後者は数字だけ。
+      < の場合、wc は「どのファイルを読んだか」を知らないからです。
+      標準入力という管を通っただけ、ということが分かる良い例です。
+
+  - id: 3-06
+    title: エラーだけを捕まえる
+    scenario: |
+      存在しないファイルを指定すると、画面にエラーが出る。
+      これは実は「別の管」を通って出てきている。
+    prompt: 存在しない nosuchfile を ls で指定し、そのエラー出力だけを error.txt に書き込め。
+    solution: ls nosuchfile 2> error.txt
+    judge:
+      mode: files
+    require_any: [ls]
+    hints:
+      - エラー出力には 2 番という番号が付いています。
+      - "2> と書くと、エラー出力だけが向きを変えます。"
+      - ls nosuchfile 2> error.txt
+    explain: |
+      0 = 標準入力、1 = 標準出力、2 = 標準エラー出力。
+      > は 1> の省略形です。エラーが画面に残るのは、
+      2 番が別の管を通っていて > の影響を受けないからです。
+
+  - id: 3-07
+    title: エラーを捨てる
+    prompt: "{list} と、存在しない nosuchfile の両方を ls に渡し、エラー出力は画面に出さないようにせよ。"
+    solution: ls {list} nosuchfile 2>/dev/null
+    alt_solutions:
+      - ls {list} nosuchfile 2> /dev/null
+    judge:
+      mode: both
+    require_any: [ls]
+    hints:
+      - エラー出力の向きを、何も残らない特別な場所へ変えます。
+      - "/dev/null という「捨て場」へ 2> で流します。"
+      - ls {list} nosuchfile 2>/dev/null
+    explain: |
+      /dev/null は書き込んだものが消える特別なファイル。
+      大量のエラーに埋もれて肝心の出力が読めないときに使います。
+      ただし本当のエラーも見えなくなるので、多用は禁物です。
+
+  - id: 3-08
+    title: 数えて残す
+    prompt: "{bigtext} の行数を count.txt に書き込め。"
+    solution: wc -l {bigtext} > count.txt
+    judge:
+      mode: files
+    require_any: [wc]
+    hints:
+      - 数えるコマンドの結果を、画面ではなくファイルへ送ります。
+      - "wc -l のうしろに > count.txt を足します。"
+      - wc -l {bigtext} > count.txt
+    explain: |
+      「画面に出るもの」は、たいていそのままファイルに落とせます。
+      逆にいうと、画面に出ないもの（less の表示など）は落とせません。
+
+  - id: 3-09
+    title: 二本を別々に
+    prompt: "{list} と存在しない nosuchfile を ls に渡し、正常な出力を ok.txt に、エラー出力を ng.txt に、それぞれ書き込め。"
+    solution: ls {list} nosuchfile > ok.txt 2> ng.txt
+    judge:
+      mode: files
+    require_any: [ls]
+    hints:
+      - 出力の管が 2 本あるので、記号も 2 つ書きます。
+      - "> と 2> を同じ行に並べて書けます。"
+      - ls {list} nosuchfile > ok.txt 2> ng.txt
+    explain: |
+      1 本のコマンドから出口が 2 本出ている、という図を頭に描けると
+      この書き方は自然に見えてきます。
+      両方を 1 つのファイルにまとめたいときは > all.txt 2>&1 と書きます。
+
+  - id: 3-10
+    title: 記号の役割
+    prompt: 「コマンドの出力を、次のコマンドの入力へ渡す」記号はどれか。番号で答えよ。
+    choices:
+      - ">"
+      - ">>"
+      - "<"
+      - "|"
+    judge:
+      mode: text
+    accept:
+      - "4"
+    solution: "4"
+    hints:
+      - ファイルではなく、コマンド同士をつなぐ記号です。
+      - 縦棒です。
+      - "4"
+    explain: |
+      | はパイプ。> や >> や < がコマンドとファイルをつなぐのに対し、
+      | はコマンドとコマンドをつなぎます。
+      この違いが分かれば、次の章の内容は半分終わったようなものです。

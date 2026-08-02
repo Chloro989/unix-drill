@@ -1,0 +1,189 @@
+chapter: 5
+title: 探す（grep）
+problems:
+  - id: 5-01
+    title: 該当する行を出す
+    scenario: |
+      {log} には INFO / WARNING / ERROR の記録が混ざっている。
+      まずは失敗した記録だけを見たい。
+    prompt: "{log} から ERROR を含む行だけを表示せよ。"
+    solution: grep ERROR {log}
+    judge:
+      mode: stdout
+    require_any: [grep]
+    hints:
+      - 「行を探して出す」ための専用コマンドがあります。
+      - コマンド名のうしろに、探す文字列とファイル名を並べます。
+      - grep ERROR {log}
+    explain: |
+      grep は「探した行をそのまま出す」道具です。
+      名前は g/re/p（global / regular expression / print）に由来します。
+
+  - id: 5-02
+    title: 件数だけ知る
+    prompt: "{log} に ERROR を含む行が何行あるかを表示せよ。"
+    solution: grep -c ERROR {log}
+    alt_solutions:
+      - grep ERROR {log} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - grep にオプションを 1 つ足すか、パイプで数えます。
+      - count の頭文字です。
+      - grep -c ERROR {log}
+    explain: |
+      grep -c ERROR f と grep ERROR f | wc -l は同じ数を返します。
+      どちらで書いても正解ですが、-c のほうが短く、速い。
+
+  - id: 5-03
+    title: 含まない行
+    prompt: "{log} のうち ERROR を含まない行が何行あるかを表示せよ。"
+    solution: grep -c -v ERROR {log}
+    alt_solutions:
+      - grep -vc ERROR {log}
+      - grep -v ERROR {log} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - 条件を裏返すオプションがあります。
+      - invert の頭文字 -v を、件数の -c と一緒に使います。
+      - grep -c -v ERROR {log}
+    explain: |
+      -v は「合わない行を出す」。除外に使う頻出オプションです。
+      -c と -v は -vc のようにまとめて書けます。
+
+  - id: 5-04
+    title: 行番号を付ける
+    prompt: "{log} から ERROR を含む行を行番号付きで探し、先頭 3 件だけ表示せよ。"
+    solution: grep -n ERROR {log} | head -n 3
+    judge:
+      mode: stdout
+    require_any: [grep]
+    hints:
+      - 行番号を付けるオプションと、先頭を切るコマンドを組み合わせます。
+      - number の頭文字 -n を付け、| head -n 3 を足します。
+      - grep -n ERROR {log} | head -n 3
+    explain: |
+      -n を付けると 行番号:内容 の形になります。
+      「何行目で失敗したか」を人に伝えるときに必要です。
+
+  - id: 5-05
+    title: 大文字小文字を無視する
+    prompt: "{log} から、大文字小文字を区別せずに error を含む行を探し、その件数を表示せよ。"
+    solution: grep -i -c error {log}
+    alt_solutions:
+      - grep -ic error {log}
+      - grep -i error {log} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - 大文字小文字を無視するオプションがあります。
+      - ignore case の頭文字 -i です。
+      - grep -i -c error {log}
+    explain: |
+      検索が空振りしたとき、まず疑うのが大文字小文字です。
+      Error / ERROR / error が混在するログでは -i が効きます。
+
+  - id: 5-06
+    title: 結果を保存する
+    prompt: "{log} から ERROR を含む行を抜き出し、errors.txt に書き込め。"
+    solution: grep ERROR {log} > errors.txt
+    judge:
+      mode: files
+    require_any: [grep]
+    hints:
+      - 探すコマンドと、3 章で習った書き込みの記号を組み合わせます。
+      - "grep のうしろに > errors.txt を足します。"
+      - grep ERROR {log} > errors.txt
+    explain: |
+      抽出して保存、は最もよく使う組み合わせです。
+      grep の出力は「行が並んだテキスト」なので、そのままファイルにできます。
+
+  - id: 5-07
+    title: 警告を数える
+    prompt: "{log} に WARNING を含む行が何行あるかを表示せよ。"
+    solution: grep -c WARNING {log}
+    alt_solutions:
+      - grep WARNING {log} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - 5-02 と同じ形です。探す文字列だけ変えます。
+      - 件数を出すオプションを付けます。
+      - grep -c WARNING {log}
+    explain: |
+      ERROR と WARNING の件数を比べると、処理の健康状態がおおまかに分かります。
+
+  - id: 5-08
+    title: どちらかを含む
+    prompt: "{log} から、ERROR または WARNING を含む行の件数を表示せよ。"
+    solution: grep -E -c "ERROR|WARNING" {log}
+    alt_solutions:
+      - grep -Ec "ERROR|WARNING" {log}
+      - grep -E "ERROR|WARNING" {log} | wc -l
+      - grep -c "ERROR\|WARNING" {log}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - 「または」を表す記号を使います。
+      - "拡張正規表現を有効にする -E を付けて、\"ERROR|WARNING\" と書きます。"
+      - grep -E -c "ERROR|WARNING" {log}
+    platform_note: -E を付けない場合は "ERROR\|WARNING" のように縦棒を \ で打ち消します。-E を付けるほうが読みやすく、環境差も出にくいので推奨します。
+    explain: |
+      grep には 2 つのモードがあります。
+      既定の基本正規表現では | + ? { } は特別扱いされず、\ を付けて初めて働きます。
+      -E（拡張正規表現）を付けると、それらがそのまま使えます。
+      迷ったら -E を付ける、と覚えておくと安全です。
+
+  - id: 5-09
+    title: 見出しを除く
+    scenario: |
+      {table} は 1 行目が見出し行になっている。データの件数を正しく知りたい。
+    prompt: "{table} から、見出し行（{headword} で始まる行）を除いた行数を表示せよ。"
+    solution: grep -c -v "^{headword}" {table}
+    alt_solutions:
+      - grep -v "^{headword}" {table} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [grep]
+    hints:
+      - 見出し行を除外してから数えます。
+      - "行頭を表す ^ と、除外の -v を使います。"
+      - grep -c -v "^{headword}" {table}
+    explain: |
+      ^ は「行の先頭」を表す記号で、次の章で本格的に扱います。
+      同じことは 9 章の sed '1d' や tail -n +2 でもできます。
+
+  - id: 5-10
+    title: 二つの数え方
+    prompt: |
+      grep -c "ERROR" f と grep "ERROR" f | wc -l の関係として、正しいものはどれか。番号で答えよ。
+    choices:
+      - 前者は該当する行数、後者は該当した回数を数えるので、一般に結果が違う
+      - どちらも該当する行数を数えるので、結果は同じ
+      - 前者はファイル名も表示するので結果が違う
+      - 後者は grep が使えない環境のための書き方で、意味が異なる
+    judge:
+      mode: text
+    accept:
+      - "2"
+    solution: "2"
+    hints:
+      - grep は「行」を単位に動きます。
+      - どちらも行を数えています。
+      - "2"
+    explain: |
+      どちらも「該当する行の数」です。1 行に ERROR が 2 回出てきても 1 と数えます。
+      「回数」を数えたいときは grep -o ERROR f | wc -l のようにします。
+      複数の書き方が同じ結果になる、という点はこの教材の採点でも同じ扱いです。

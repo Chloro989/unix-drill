@@ -1,0 +1,178 @@
+chapter: 7
+title: 並べ替えと集計
+problems:
+  - id: 7-01
+    title: 並べ替える
+    prompt: "{list} の中身を並べ替えて表示せよ。"
+    solution: sort {list}
+    judge:
+      mode: stdout
+    require_any: [sort]
+    hints:
+      - 「並べ替える」という意味の英単語がそのままコマンド名です。
+      - コマンド名とファイル名だけです。
+      - sort {list}
+    explain: |
+      既定では文字として並べ替えます。数値として並べたいときは -n、
+      逆順にしたいときは -r を付けます。
+
+  - id: 7-02
+    title: 重複を消す
+    prompt: "{list} から重複を取り除き、1 種類につき 1 行だけ表示せよ。"
+    solution: sort {list} | uniq
+    alt_solutions:
+      - sort -u {list}
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [sort]
+    hints:
+      - 重複を消すコマンドは、隣り合った同じ行しか消せません。
+      - 先に sort で並べてから uniq に渡します。
+      - sort {list} | uniq
+    explain: |
+      uniq は「隣り合う同じ行」だけをまとめます。
+      だから必ず先に sort が要る。sort -u と書けば 1 つで済みます。
+
+  - id: 7-03
+    title: 数える
+    prompt: "{list} の中で、それぞれの{listitem}が何回出てくるかを数えて表示せよ。"
+    solution: sort {list} | uniq -c
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    require_any: [uniq]
+    hints:
+      - 重複を消すコマンドに、件数を出すオプションがあります。
+      - sort してから uniq -c に渡します。
+      - sort {list} | uniq -c
+    explain: |
+      sort | uniq -c は、UNIX で最もよく使う集計の型です。
+      「何がいくつあるか」を知りたくなったら、まずこれを思い出してください。
+
+  - id: 7-04
+    title: 多い順に上位三つ
+    prompt: "{list} の中で出現回数が多い{listitem}を、多い順に 3 つ表示せよ。"
+    solution: sort {list} | uniq -c | sort -rn | head -n 3
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    require_any: [uniq]
+    hints:
+      - 数えたあと、その結果をもう一度並べ替えます。
+      - "uniq -c の出力を sort -rn（数値で逆順）に渡し、head -n 3 で切ります。"
+      - sort {list} | uniq -c | sort -rn | head -n 3
+    explain: |
+      sort が 2 回出てきます。1 回目は uniq のための下ごしらえ、
+      2 回目は件数での並べ替え。役割がまったく違います。
+      -r が逆順、-n が数値としての比較。-rn でまとめて書けます。
+
+  - id: 7-05
+    title: 列を取り出す
+    prompt: "{table} の {namecol} 列目（{namelabel}）だけを取り出し、先頭 5 行を表示せよ。"
+    solution: cut -f {namecol} {table} | head -n 5
+    judge:
+      mode: stdout
+    require_any: [cut]
+    hints:
+      - 列を切り出す専用のコマンドがあります。
+      - "cut の -f で列番号を指定します。区切り文字は既定でタブです。"
+      - cut -f {namecol} {table} | head -n 5
+    explain: |
+      cut -f は「何列目か」を番号で指定します。既定の区切りはタブなので、
+      タブ区切りのファイルならオプションなしで使えます。
+
+  - id: 7-06
+    title: 区切り文字を指定する
+    prompt: "{records} の {agecol} 列目だけを取り出し、先頭 5 行を表示せよ。"
+    solution: cut -d , -f {agecol} {records} | head -n 5
+    alt_solutions:
+      - cut -d, -f {agecol} {records} | head -n 5
+      - cut -d "," -f {agecol} {records} | head -n 5
+    judge:
+      mode: stdout
+    require_any: [cut]
+    hints:
+      - このファイルはカンマ区切りなので、区切り文字を教える必要があります。
+      - delimiter の頭文字 -d で区切り文字を指定します。
+      - cut -d , -f {agecol} {records} | head -n 5
+    explain: |
+      -d で区切り文字を指定します。CSV なら -d,。
+      なお、値の中にカンマを含む本格的な CSV は cut では正しく扱えません。
+      その場合は専用の道具が要ります。試験の範囲では気にしなくて大丈夫です。
+
+  - id: 7-07
+    title: 最大値を探す
+    prompt: "{table} の {numcol} 列目（{numlabel}）の中で、最も大きい値を表示せよ。見出し行は数えないこと。"
+    solution: cut -f {numcol} {table} | tail -n +2 | sort -n | tail -n 1
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [sort]
+    hints:
+      - 列を取り出し、見出しを外し、数値で並べ、最後を取ります。
+      - "tail -n +2 で 2 行目以降、sort -n で数値順、tail -n 1 で最後の 1 行。"
+      - cut -f {numcol} {table} | tail -n +2 | sort -n | tail -n 1
+    explain: |
+      tail -n +2 は「2 行目から最後まで」。マイナスではなくプラスです。
+      見出し行を落とす定番の書き方で、grep -v や sed '1d' でも同じことができます。
+      -n を付けずに sort すると 9 が 100 より大きいと判定されるので注意。
+
+  - id: 7-08
+    title: 大文字に変える
+    prompt: "{table} の {namecol} 列目を取り出し、すべて大文字に変換して先頭 3 行を表示せよ。"
+    solution: cut -f {namecol} {table} | tr a-z A-Z | head -n 3
+    alt_solutions:
+      - cut -f {namecol} {table} | tr "a-z" "A-Z" | head -n 3
+      - cut -f {namecol} {table} | tr [:lower:] [:upper:] | head -n 3
+    judge:
+      mode: stdout
+    require_any: [tr]
+    hints:
+      - 文字を 1 対 1 で置き換えるコマンドがあります。
+      - translate を縮めた tr に、変換前と変換後の範囲を渡します。
+      - cut -f {namecol} {table} | tr a-z A-Z | head -n 3
+    explain: |
+      tr はファイル名を引数に取りません。必ずパイプか < で流し込みます。
+      文字を消す -d、連続を 1 つにまとめる -s もよく使います。
+
+  - id: 7-09
+    title: 種類を一覧にする
+    prompt: "{table} の {catcol} 列目（{catlabel}）にどんな値があるかを、重複なく並べて表示せよ。見出し行は除くこと。"
+    solution: cut -f {catcol} {table} | tail -n +2 | sort -u
+    alt_solutions:
+      - cut -f {catcol} {table} | tail -n +2 | sort | uniq
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [cut]
+    hints:
+      - 列を取り出し、見出しを外し、重複を消します。
+      - sort -u でまとめて書けます。
+      - cut -f {catcol} {table} | tail -n +2 | sort -u
+    explain: |
+      データを受け取ったら、まず各列にどんな値が入りうるのかを見る。
+      この一行は、その確認に最もよく使う形です。
+
+  - id: 7-10
+    title: 順番の理由
+    prompt: |
+      uniq を使う前に sort をかけるのはなぜか。最も適切なものはどれか。番号で答えよ。
+    choices:
+      - uniq は並べ替えができないので、見やすさのために sort する
+      - uniq は隣り合った同じ行しかまとめられないので、同じ行を隣に集める必要がある
+      - sort をかけないと uniq がエラーで止まるから
+      - sort をかけると uniq が速く動くから
+    judge:
+      mode: text
+    accept:
+      - "2"
+    solution: "2"
+    hints:
+      - uniq がファイル全体を覚えているわけではない、と考えてみてください。
+      - uniq が見ているのは「直前の行」だけです。
+      - "2"
+    explain: |
+      uniq は 1 行ずつ流れてくるものを直前の行とだけ見比べます。
+      離れた場所に同じ行があっても気づきません。
+      だから sort で隣に集めてから渡す。エラーにはならず、静かに間違った結果が出るのが厄介です。

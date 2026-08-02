@@ -1,0 +1,15 @@
+# 自動生成されるデータ（setup で作り直せる）
+.data/
+playground/
+
+# 個人の記録
+.progress.json
+.history
+
+# Python
+__pycache__/
+*.py[cod]
+
+# OS
+.DS_Store
+Thumbs.db

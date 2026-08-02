@@ -1,0 +1,178 @@
+chapter: 9
+title: 置き換える（sed）
+problems:
+  - id: 9-01
+    title: 何行目かを出す
+    scenario: |
+      sed は「流れてくる行に手を加える」道具。
+      置換が中心だが、行を選ぶこともできる。
+    prompt: "{log} の 5 行目だけを表示せよ。sed を使うこと。"
+    solution: sed -n '5p' {log}
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - sed は既定ですべての行を出すので、それを止めるオプションが要ります。
+      - "-n で自動出力を止め、'5p' で 5 行目だけを印字します。"
+      - sed -n '5p' {log}
+    explain: |
+      p は print。-n を付けないと、5 行目だけ 2 回出てしまいます。
+      -n と p は必ず対で使う、と覚えておくと間違えません。
+
+  - id: 9-02
+    title: 範囲を出す
+    prompt: "{log} の 1 行目から 3 行目までを sed で表示せよ。"
+    solution: sed -n '1,3p' {log}
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - 行番号をカンマでつなぐと範囲になります。
+      - "'1,3p' と書きます。"
+      - sed -n '1,3p' {log}
+    explain: |
+      head -n 3 と同じ結果です。
+      sed の強みは、範囲を指定したうえでそこに処理を加えられることにあります。
+
+  - id: 9-03
+    title: 置き換える
+    prompt: "{log} の中の ERROR を FATAL に置き換え、FATAL を含む行が何行になるかを表示せよ。"
+    solution: sed 's/ERROR/FATAL/' {log} | grep -c FATAL
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [sed]
+    hints:
+      - 置換は s で始まる決まった形で書きます。
+      - "s/置換前/置換後/ の形です。"
+      - sed 's/ERROR/FATAL/' {log} | grep -c FATAL
+    explain: |
+      s/A/B/ は substitute（置換）。
+      元のファイルは変わりません。sed は結果を画面に流すだけです。
+      保存したいときは > で別のファイルに書きます。
+
+  - id: 9-04
+    title: 行の中の全部を置き換える
+    prompt: "{records} のカンマをすべてセミコロンに置き換え、先頭 2 行を表示せよ。"
+    solution: sed 's/,/;/g' {records} | head -n 2
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - そのままだと、各行の最初の 1 つしか置き換わりません。
+      - 末尾に g を付けると行内のすべてが対象になります。
+      - sed 's/,/;/g' {records} | head -n 2
+    explain: |
+      g は global。付け忘れると 1 行につき 1 つだけしか置換されません。
+      これは実務でも試験でも定番の落とし穴です。
+
+  - id: 9-05
+    title: 見出し行を消す
+    prompt: "{table} から 1 行目を削除し、残りが何行あるかを表示せよ。"
+    solution: sed '1d' {table} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [sed]
+    hints:
+      - 削除は d です。
+      - "'1d' で 1 行目を削除します。"
+      - sed '1d' {table} | wc -l
+    explain: |
+      同じことは tail -n +2 や grep -v "^見出し" でもできます。
+      3 つの書き方を知っていると、状況に応じて一番短いものを選べます。
+
+  - id: 9-06
+    title: 最後の行
+    prompt: "{log} の最終行だけを sed で表示せよ。"
+    solution: sed -n '$p' {log}
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - 正規表現の行末と同じ記号が、sed では「最終行」を表します。
+      - "'$p' と書きます。シングルクォートで囲むこと。"
+      - sed -n '$p' {log}
+    platform_note: $ をダブルクォートで囲むと、シェルが変数として解釈しようとします。sed のプログラムは必ずシングルクォートで囲みましょう。
+    explain: |
+      sed の中の $ は「最後の行」。正規表現の中の $ は「行末」。
+      同じ記号が場所によって別の意味を持つ例が、ここにもあります。
+
+  - id: 9-07
+    title: 行頭に足す
+    prompt: "{notesfile} の各行の先頭に、引用のしるしとして「> 」（不等号と半角空白）を付けて表示せよ。"
+    solution: sed 's/^/> /' {notesfile}
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - 「行頭」を置換前に指定すると、そこに差し込めます。
+      - "s/^/> / と書きます。"
+      - sed 's/^/> /' {notesfile}
+    explain: |
+      ^ は幅を持たない位置なので、それを置き換えると「挿入」になります。
+      行末に付けたいときは s/$/…/ です。
+      なお、この > はシングルクォートの中にあるのでリダイレクトにはなりません。
+
+  - id: 9-08
+    title: 消す
+    prompt: "{log} から文字列 ERROR をすべて取り除き、先頭 3 行を表示せよ。"
+    solution: sed 's/ERROR//g' {log} | head -n 3
+    judge:
+      mode: stdout
+    require_any: [sed]
+    hints:
+      - 「何にも置き換えない」と書けば削除になります。
+      - 置換後を空にして s/ERROR//g とします。
+      - sed 's/ERROR//g' {log} | head -n 3
+    explain: |
+      置換後を空にすると削除。d が行ごと消すのに対し、これは文字列だけを消します。
+      行を消すのか、文字を消すのかを区別して考えてください。
+
+  - id: 9-09
+    title: 上書きの注意
+    prompt: |
+      sed -i について正しいものはどれか。番号で答えよ。
+    choices:
+      - 画面に出さず、結果でファイルそのものを書き換える。書き方が macOS と Linux で異なる
+      - 大文字小文字を無視して置換する
+      - 実行前に確認を求める安全な書き方である
+      - 複数のファイルを同時に処理するためのオプションである
+    judge:
+      mode: text
+    accept:
+      - "1"
+    solution: "1"
+    hints:
+      - i は in-place の頭文字です。
+      - 元のファイルが変わってしまいます。
+      - "1"
+    platform_note: Linux では sed -i 's/…/…/' file、macOS では sed -i '' 's/…/…/' file のように空の引数が要ります。
+    explain: |
+      -i は元のファイルを直接書き換えます。取り消せません。
+      しかも書き方が環境で違うため、事故が起きやすいオプションです。
+      安全なのは sed 's/…/…/' 元 > 新 と、別のファイルに書く形。
+      この教材では -i を使う問題は出しません。実務でも慎重に。
+
+  - id: 9-10
+    title: g の有無
+    prompt: |
+      1 行に ERROR が 2 回出てくる行に対して sed 's/ERROR/OK/' を適用すると、どうなるか。番号で答えよ。
+    choices:
+      - 2 回とも OK に置き換わる
+      - 最初の 1 回だけが OK に置き換わる
+      - 最後の 1 回だけが OK に置き換わる
+      - エラーになる
+    judge:
+      mode: text
+    accept:
+      - "2"
+    solution: "2"
+    hints:
+      - g が付いていません。
+      - g がないと、行内で最初に見つかったものだけが対象です。
+      - "2"
+    explain: |
+      g を付けない s/// は、各行の最初の 1 つだけを置き換えます。
+      「1 行につき 1 回」であって「ファイル全体で 1 回」ではない点に注意。
+      すべて置き換えたいときは s/ERROR/OK/g です。

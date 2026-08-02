@@ -1,0 +1,175 @@
+chapter: 8
+title: 列を扱う（awk）
+problems:
+  - id: 8-01
+    title: 一列目を出す
+    scenario: |
+      awk は「行を読み、条件に合えば処理をする」道具。
+      cut より柔軟で、計算もできる。
+    prompt: "{table} の 1 列目だけを取り出し、先頭 5 行を表示せよ。awk を使うこと。"
+    solution: awk '{print $1}' {table} | head -n 5
+    judge:
+      mode: stdout
+    require_any: [awk]
+    hints:
+      - "awk のプログラムは '{ }' で囲んで書きます。"
+      - "$1 が 1 列目です。'{print $1}' と書きます。"
+      - awk '{print $1}' {table} | head -n 5
+    explain: |
+      $1 $2 … が各列、$0 が行全体、NF が列数、NR が行番号。
+      この 4 つを覚えれば awk の大半は書けます。
+      シングルクォートで囲むのは、$ をシェルに解釈させないためです。
+
+  - id: 8-02
+    title: 区切りを指定する
+    prompt: "{records} の {agecol} 列目を awk で取り出し、先頭 5 行を表示せよ。"
+    solution: awk -F, '{print ${agecol}}' {records} | head -n 5
+    alt_solutions:
+      - awk -F "," '{print ${agecol}}' {records} | head -n 5
+    judge:
+      mode: stdout
+    require_any: [awk]
+    hints:
+      - awk は既定で空白を区切りとみなします。カンマ区切りだと教える必要があります。
+      - -F, で区切り文字を指定します。
+      - awk -F, '{print ${agecol}}' {records} | head -n 5
+    explain: |
+      -F は field separator の頭文字。cut の -d に当たります。
+      タブ区切りのファイルは既定の空白区切りでもたいてい動きますが、
+      空の列があると列がずれるので -F"\t" と明示するのが安全です。
+
+  - id: 8-03
+    title: 行数を数える
+    prompt: "{table} の行数を awk で表示せよ。"
+    solution: awk 'END{print NR}' {table}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - 最後まで読み終えてから 1 回だけ処理する書き方があります。
+      - "END{ } の中で、行番号を表す NR を印字します。"
+      - awk 'END{print NR}' {table}
+    explain: |
+      awk は BEGIN{...} で始まり、各行の処理をして、END{...} で終わります。
+      NR は「今何行目か」なので、END の時点では総行数になっています。
+      もちろん wc -l のほうが短い。道具は使い分けです。
+
+  - id: 8-04
+    title: 条件で絞る
+    prompt: "{table} のうち、見出し行を除いて {numcol} 列目（{numlabel}）が {numthr} より大きい行の数を表示せよ。"
+    solution: awk -F"\t" 'NR>1 && ${numcol} > {numthr}' {table} | wc -l
+    alt_solutions:
+      - awk -F"\t" 'NR>1 && ${numcol} > {numthr} {print}' {table} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - awk は「条件だけ」を書くと、その条件に合う行をそのまま出します。
+      - "NR>1 で見出しを外し、&& でもう一つ条件を足します。"
+      - awk -F"\t" 'NR>1 && ${numcol} > {numthr}' {table} | wc -l
+    explain: |
+      awk の書き方は 条件 { 処理 } です。
+      処理を省くと「その行をそのまま印字」、条件を省くと「すべての行」。
+      NR>1 が見出し行を外す定番です。
+
+  - id: 8-05
+    title: 合計する
+    prompt: "{table} の {numcol} 列目（{numlabel}）の合計を表示せよ。見出し行は加えないこと。"
+    solution: awk -F"\t" 'NR>1 {s+=${numcol}} END{print s}' {table}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - 変数に足し込んでいき、最後に出します。
+      - "NR>1 {s+=列} と END{print s} を並べて書きます。"
+      - awk -F"\t" 'NR>1 {s+=${numcol}} END{print s}' {table}
+    explain: |
+      変数は宣言なしで使えて、初期値は 0 です。
+      合計はここまでの道具（grep や sort）ではできません。
+      「計算が要るなら awk」が使い分けの目安になります。
+
+  - id: 8-06
+    title: 平均を出す
+    prompt: "{table} の {numcol} 列目（{numlabel}）の平均を表示せよ。見出し行は数えないこと。"
+    solution: awk -F"\t" 'NR>1 {s+=${numcol}; n++} END{print s/n}' {table}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - 合計と件数の両方を数えておき、最後に割ります。
+      - "n++ で件数を数え、END で s/n を印字します。"
+      - awk -F"\t" 'NR>1 {s+=${numcol}; n++} END{print s/n}' {table}
+    explain: |
+      NR-1 を使って END{print s/(NR-1)} と書くこともできます。
+      ただし空行や欠損があるときは、自分で数えた n のほうが安全です。
+
+  - id: 8-07
+    title: 年齢で絞る
+    prompt: "{records} のうち、{agecol} 列目が 60 以上の行の数を表示せよ。見出し行は除くこと。"
+    solution: awk -F, 'NR>1 && ${agecol} >= 60' {records} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - カンマ区切りであることを指定し、条件を 2 つ並べます。
+      - "-F, と NR>1 && 列 >= 60 を使います。"
+      - awk -F, 'NR>1 && ${agecol} >= 60' {records} | wc -l
+    explain: |
+      比較は > < >= <= == != が使えます。
+      文字列との比較は $3 == "ERROR" のように引用符で囲みます。
+
+  - id: 8-08
+    title: 指定した行だけ
+    prompt: "{log} の 100 行目だけを awk で表示せよ。"
+    solution: awk 'NR==100' {log}
+    judge:
+      mode: stdout
+    require_any: [awk]
+    hints:
+      - 行番号を表す変数を条件に使います。
+      - "NR==100 とだけ書けば、その行が印字されます。"
+      - awk 'NR==100' {log}
+    explain: |
+      4-05 の head -n 100 | tail -n 1 と同じ結果です。
+      == は比較、= は代入。1 つ書き忘れると条件が常に真になり、全行出ます。
+
+  - id: 8-09
+    title: 列を並べ替えて出す
+    prompt: "{table} の 1 列目と {numcol} 列目を、この順で空白区切りで出力し、先頭 3 行を表示せよ。"
+    solution: awk -F"\t" '{print $1, ${numcol}}' {table} | head -n 3
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    require_any: [awk]
+    hints:
+      - print はカンマで区切って複数の値を並べられます。
+      - "'{print $1, 列}' と書きます。"
+      - awk -F"\t" '{print $1, ${numcol}}' {table} | head -n 3
+    explain: |
+      print のカンマは、出力時に空白 1 つになります。
+      カンマなしで並べると、隙間なく連結されます。この違いは覚えておくと便利です。
+      cut は列の順番を入れ替えられませんが、awk ならできます。
+
+  - id: 8-10
+    title: 該当する行を数える
+    prompt: "{log} の中で ERROR を含む行の数を awk で表示せよ。"
+    solution: awk '/ERROR/ {n++} END{print n}' {log}
+    alt_solutions:
+      - awk '/ERROR/' {log} | wc -l
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [awk]
+    hints:
+      - awk の条件には、スラッシュで囲んだ正規表現も書けます。
+      - "/ERROR/ を条件にして、数えて END で出します。"
+      - awk '/ERROR/ {n++} END{print n}' {log}
+    explain: |
+      awk は grep の仕事もこなせます。
+      ただし単に探すだけなら grep のほうが短く、速い。
+      「探したうえで計算する」ときに awk の出番になります。

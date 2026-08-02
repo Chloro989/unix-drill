@@ -1,0 +1,171 @@
+chapter: 1
+title: 場所とファイル
+problems:
+  - id: 1-01
+    title: 今どこにいるか
+    scenario: |
+      {dataset}のデータが手元に届いた。
+      まずは自分がどこに立っているかを確かめるところから。
+    prompt: 今いるディレクトリ（カレントディレクトリ）の場所を表示せよ。
+    solution: pwd
+    judge:
+      mode: stdout
+    require_any: [pwd]
+    hints:
+      - 「今いる場所を印字する」という意味の 3 文字のコマンドがあります。
+      - オプションは要りません。コマンド名だけを打ちます。
+      - pwd
+    explain: |
+      pwd は print working directory の略。
+      迷子になったらまず pwd、が UNIX の基本動作です。
+
+  - id: 1-02
+    title: 一覧を見る
+    prompt: カレントディレクトリにあるディレクトリとファイルの一覧を表示せよ。
+    solution: ls
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [ls]
+    hints:
+      - list の頭 2 文字です。
+      - オプションなしで打つだけです。
+      - ls
+    explain: |
+      ls は list の略。大学院入試でも、この 1 コマンドを書かせる形式が出ています。
+      pwd で「どこか」を知り、ls で「何があるか」を知る。この 2 つが出発点。
+
+  - id: 1-03
+    title: 隠れているものまで見る
+    scenario: |
+      {notesdir} には、見えているファイルのほかに
+      ピリオドで始まる「隠しファイル」が置いてあるらしい。
+    prompt: "{notesdir} ディレクトリの中身を、隠しファイルも含めて表示せよ。"
+    solution: ls -a {notesdir}
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [ls]
+    hints:
+      - ls にオプションを 1 つ足します。
+      - all の頭文字です。-a を付けます。
+      - ls -a {notesdir}
+    explain: |
+      名前がピリオドで始まるファイルは、ふつうの ls では表示されません。
+      設定ファイル（.bashrc など）はこの仕組みで隠されています。
+      -a は . と .. も表示し、-A はそれらを除きます（出力が変わるので使い分けます）。
+
+  - id: 1-04
+    title: 詳しい一覧
+    prompt: カレントディレクトリの一覧を、大きさや更新日時も含めた詳細な形式で表示せよ。
+    solution: ls -l
+    judge:
+      mode: stdout
+      normalize: [squeeze_space, sort_lines]
+    require_any: [ls]
+    hints:
+      - ls にオプションを 1 つ足します。
+      - long の頭文字です。
+      - ls -l
+    explain: |
+      左から順に、権限・リンク数・所有者・グループ・バイト数・更新日時・名前。
+      -lh とすると大きさが 4.0K のような読みやすい単位になります。
+
+  - id: 1-05
+    title: 移動する
+    prompt: "{notesdir} ディレクトリへ移動せよ。"
+    solution: cd {notesdir}
+    alt_solutions:
+      - cd ./{notesdir}
+    judge:
+      mode: cwd
+    require_any: [cd]
+    hints:
+      - change directory の頭文字を取った 2 文字のコマンドです。
+      - コマンドのうしろに移動先の名前を書きます。
+      - cd {notesdir}
+    explain: |
+      cd .. で 1 つ上へ、cd だけでホームディレクトリへ戻ります。
+      cd - は「直前にいた場所」へ戻る便利な書き方です。
+
+  - id: 1-06
+    title: 中身をそのまま出す
+    prompt: "{notesfile} の内容を画面に表示せよ。"
+    solution: cat {notesfile}
+    judge:
+      mode: stdout
+    require_any: [cat]
+    hints:
+      - concatenate（連結する）を縮めた 3 文字のコマンドです。
+      - コマンド名のうしろにファイル名を書くだけです。
+      - cat {notesfile}
+    explain: |
+      cat は本来「複数ファイルをつないで出す」道具です。
+      1 つだけ渡すと、結果的にそのファイルの中身が表示されます。
+
+  - id: 1-07
+    title: 行数を数える
+    prompt: "{list} が何行あるかを表示せよ。"
+    solution: wc -l {list}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - word count を縮めた 2 文字のコマンドです。
+      - 行数だけを出すオプションは line の頭文字です。
+      - wc -l {list}
+    explain: |
+      wc はオプションなしだと「行数・単語数・バイト数」を並べて出します。
+      -l で行数、-w で単語数、-c でバイト数。
+
+  - id: 1-08
+    title: 大きなファイルの行数
+    scenario: |
+      {bigtext} は数千行ある。cat で開くと画面が流れ去ってしまう。
+    prompt: "{bigtext} の行数を表示せよ。"
+    solution: wc -l {bigtext}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - 前の問題と同じコマンドです。ファイル名だけ変えます。
+      - 行数を出すオプションを付けます。
+      - wc -l {bigtext}
+    explain: |
+      大きなファイルはまず「どれくらい大きいか」を測ってから開く。
+      これが cat で事故らないための習慣です。
+
+  - id: 1-09
+    title: 移動せずに覗く
+    prompt: 移動せずに、{notesdir} ディレクトリの中身の一覧を表示せよ。
+    solution: ls {notesdir}
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [ls]
+    hints:
+      - ls はうしろに場所を書けます。
+      - ls のあとにディレクトリ名を書きます。cd は使いません。
+      - ls {notesdir}
+    explain: |
+      cd してから ls して cd .. で戻る、という往復は多くの場合不要です。
+      ほとんどのコマンドは「どこを対象にするか」を引数で受け取れます。
+
+  - id: 1-10
+    title: 名前で絞り込む
+    prompt: カレントディレクトリにある、名前が .txt で終わるファイルだけを一覧表示せよ。
+    solution: ls *.txt
+    judge:
+      mode: stdout
+      normalize: [sort_lines]
+    require_any: [ls]
+    hints:
+      - "* は「任意の文字の並び」を表す記号です。"
+      - ls のうしろに *.txt と書きます。
+      - ls *.txt
+    explain: |
+      * や ? はシェルが展開する「ワイルドカード」で、正規表現とは別物です。
+      シェルの * は「何文字でも」、正規表現の * は「直前の文字の繰り返し」。
+      第 6 章でこの違いをもう一度扱います。

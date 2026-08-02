@@ -1,0 +1,174 @@
+chapter: 2
+title: 中を覗く
+problems:
+  - id: 2-01
+    title: 先頭だけ見る
+    scenario: |
+      {bigtext} は数千行ある。全部は要らない。
+      どんな形式のデータなのかを知りたいだけだ。
+    prompt: "{bigtext} の先頭 10 行を表示せよ。"
+    solution: head {bigtext}
+    alt_solutions:
+      - head -n 10 {bigtext}
+    judge:
+      mode: stdout
+    require_any: [head]
+    hints:
+      - 「頭」という意味の英単語がそのままコマンド名です。
+      - 何も指定しないと既定で 10 行出ます。
+      - head {bigtext}
+    explain: |
+      head の既定は 10 行。まず head、が大きなファイルを開くときの作法です。
+
+  - id: 2-02
+    title: 行数を指定する
+    prompt: "{bigtext} の先頭 20 行を表示せよ。"
+    solution: head -n 20 {bigtext}
+    judge:
+      mode: stdout
+    require_any: [head]
+    hints:
+      - head に行数を指定するオプションを付けます。
+      - number の頭文字を使って -n 20 と書きます。
+      - head -n 20 {bigtext}
+    platform_note: head -20 という古い書き方も多くの環境で動きますが、-n 20 が正式です。試験では -n を使いましょう。
+    explain: |
+      -n 20 が POSIX の正式な書き方。-20 は歴史的な省略形で、
+      環境によっては警告が出たり動かなかったりします。
+
+  - id: 2-03
+    title: 末尾を見る
+    scenario: |
+      処理がうまくいったかどうかは、たいてい記録の最後に書いてある。
+    prompt: "{log} の末尾 5 行を表示せよ。"
+    solution: tail -n 5 {log}
+    judge:
+      mode: stdout
+    require_any: [tail]
+    hints:
+      - head の反対の意味を持つ英単語です。
+      - 行数の指定は head と同じ -n です。
+      - tail -n 5 {log}
+    explain: |
+      tail -f を使うと、書き足されるたびに画面へ流れ続けます。
+      動いている処理の記録を眺めるときの定番です（終了は Ctrl+C）。
+
+  - id: 2-04
+    title: 表の行数
+    scenario: |
+      {table} は 1 行目が見出し行になっている表だ。
+    prompt: "{table} の行数を表示せよ。"
+    solution: wc -l {table}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - 行を数えるコマンドです。
+      - 行数だけを出すオプションを付けます。
+      - wc -l {table}
+    explain: |
+      注意すべきは、この数には見出し行が 1 行含まれていること。
+      実データの件数はこれより 1 少ない。試験でもよく問われる引っかけどころです。
+
+  - id: 2-05
+    title: 三つの数
+    prompt: "{records} の行数・単語数・バイト数をまとめて表示せよ。"
+    solution: wc {records}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - オプションを付けなければ 3 つとも出ます。
+      - コマンド名とファイル名だけです。
+      - wc {records}
+    explain: |
+      左から 行数・単語数・バイト数。単語は空白で区切られたかたまりを指すので、
+      カンマ区切りのファイルでは単語数はあまり意味を持ちません。
+
+  - id: 2-06
+    title: 大きさをバイトで
+    prompt: "{notesfile} のバイト数を表示せよ。"
+    solution: wc -c {notesfile}
+    judge:
+      mode: stdout
+      normalize: [numeric_only]
+    require_any: [wc]
+    hints:
+      - wc のオプション違いです。
+      - character / byte の頭文字を使います。
+      - wc -c {notesfile}
+    explain: |
+      -c はバイト数、-m は文字数。日本語のように 1 文字が複数バイトになる
+      文字ではこの 2 つは一致しません。
+
+  - id: 2-07
+    title: 1 画面ずつ読む
+    scenario: |
+      これは紙に書く形式の問題。実行はしない。
+    prompt: "{bigtext} を 1 画面ずつ、上下に動かしながら読むためのコマンドを書け。"
+    judge:
+      mode: text
+    accept:
+      - less\s+.*
+      - more\s+.*
+    hints:
+      - "「もっと」ではなく「より少なく」という名前のコマンドです。"
+      - 昔からある more の改良版で、逆方向にも進めます。
+      - less {bigtext}
+    solution: less {bigtext}
+    explain: |
+      less は画面を占有する対話的なコマンドなので、この教材では自動採点できません。
+      本物のシェルで一度は試してください（setup で作る playground/ で試せます）。
+
+  - id: 2-08
+    title: 抜け出し方
+    scenario: |
+      less を開いたら画面が変わってしまい、戻れなくなった。
+    prompt: less や more を終了して元の画面に戻るには、どのキーを押せばよいか。1 文字で答えよ。
+    judge:
+      mode: text
+    accept:
+      - "q"
+    solution: q
+    hints:
+      - quit の頭文字です。
+      - アルファベット 1 文字です。
+      - q
+    explain: |
+      q で終了、スペースで次の画面、b で 1 画面戻る、/文字列 で検索。
+      どうにもならないときは Ctrl+C、それでも駄目なら Ctrl+D。
+      この 3 つを知っているだけで、初心者の詰まりの大半は解けます。
+
+  - id: 2-09
+    title: 行番号を付ける
+    prompt: "{notesfile} の内容を、各行に行番号を付けて表示せよ。"
+    solution: cat -n {notesfile}
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    require_any: [cat]
+    hints:
+      - cat にオプションを 1 つ足します。
+      - number の頭文字です。
+      - cat -n {notesfile}
+    explain: |
+      エラーが「12 行目」と言われたときに、この形式が効きます。
+      -b にすると空行には番号を振りません。
+
+  - id: 2-10
+    title: 複数まとめて数える
+    prompt: "{fileA} と {fileB} の行数を、1 回のコマンドでまとめて表示せよ。"
+    solution: wc -l {fileA} {fileB}
+    judge:
+      mode: stdout
+      normalize: [squeeze_space]
+    require_any: [wc]
+    hints:
+      - ファイル名は 2 つ並べて書けます。
+      - wc -l のうしろに空白で区切って 2 つ書きます。
+      - wc -l {fileA} {fileB}
+    explain: |
+      複数ファイルを渡すと、それぞれの行数に加えて total 行が付きます。
+      多くのコマンドは引数を何個でも取れる、というのが UNIX の共通の作法です。

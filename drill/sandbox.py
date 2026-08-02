@@ -70,13 +70,24 @@ def run(command, data_dir, capture_cwd=False):
             return RunResult(timeout=True, error="時間切れ (%d 秒)" % TIMEOUT)
         stdout = proc.stdout
         cwd = ""
+        # macOS では /var が /private/var へのシンボリックリンクなので、
+        # bash が報告する $PWD と Python が持つパスの表記が食い違う。
+        # 両方を実体パスに揃えてから比べる。
+        work_real = os.path.realpath(work)
         if capture_cwd and marker in stdout:
             stdout, _, tail = stdout.rpartition(marker)
             stdout = stdout.rstrip("\n")
-            cwd = os.path.relpath(tail.strip(), work) if tail.strip() else ""
+            tail = tail.strip()
+            if tail:
+                try:
+                    cwd = os.path.relpath(os.path.realpath(tail), work_real)
+                except ValueError:
+                    cwd = tail
         # 一時ディレクトリのパスは実行ごとに変わるので、固定の名前に置き換える
-        stdout = stdout.replace(work, "/playground")
-        stderr = proc.stderr.replace(work, "/playground")
+        stderr = proc.stderr
+        for path in (work_real, work):
+            stdout = stdout.replace(path, "/playground")
+            stderr = stderr.replace(path, "/playground")
         after = snapshot(work)
         changed = {k: v for k, v in after.items()
                    if k not in before or before[k] != v}

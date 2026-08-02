@@ -1,6 +1,6 @@
 # UNIX コマンド練習ドリル
 
-[![selftest](https://github.com/USER/REPO/actions/workflows/test.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/test.yml)
+[![selftest](https://github.com/chloro989/unix-drill/actions/workflows/test.yml/badge.svg)](https://github.com/chloro989/unix-drill/actions/workflows/test.yml)
 
 ターミナルで動く、日本語の UNIX コマンド練習環境です。
 **Python 3 と bash だけで動きます。インストールは不要です。**

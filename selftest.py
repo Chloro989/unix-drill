@@ -19,5 +19,17 @@ for theme in themes.BUILDERS:
             if not v.passed:
                 fail += 1
                 print("NG [%s/%s] %r -> %s %s %s" % (theme, p["id"], c, v.code, v.message, v.detail))
+                # 失敗の原因を追えるように、実際に得られたものを出す
+                from drill import sandbox
+                mode = (p.get("judge") or {}).get("mode", "stdout")
+                need_cwd = mode in ("cwd", "cwd+stdout")
+                got = sandbox.run(c, data_dir, capture_cwd=need_cwd)
+                exp = sandbox.run(p["solution"], data_dir, capture_cwd=need_cwd)
+                print("    mode=%s" % mode)
+                print("    cwd    got=%r exp=%r" % (got.cwd, exp.cwd))
+                print("    stdout got=%r" % got.stdout[:120])
+                print("    stdout exp=%r" % exp.stdout[:120])
+                if got.stderr.strip():
+                    print("    stderr got=%r" % got.stderr[:120])
 print("%d/%d ok" % (total-fail, total))
 sys.exit(1 if fail else 0)
